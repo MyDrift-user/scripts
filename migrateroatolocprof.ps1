@@ -1,3 +1,13 @@
+# Elevate Script if needed
+#if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    # If not elevated, relaunch the script in a new elevated PowerShell session
+    #TODO save script in directory, change escapedcommand to run that saved script instead of rerequest code.
+ #   $escapedCommand = 'irm https://raw.githubusercontent.com/MyDrift-user/scripts/main/migrateroatolocprof.ps1 | iex'
+ #   Start-Process PowerShell -ArgumentList "-Command", $escapedCommand -Verb RunAs
+ #   exit
+#}
+
+
 # Function to ask the user if they have dropped the path in the Active Directory
 function Ask-Confirmation {
     param (
