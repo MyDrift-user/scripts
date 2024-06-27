@@ -1,3 +1,49 @@
+# Initialize the $sync object and its configs property if not already initialized
+if (-not $sync) {
+    $sync = New-Object PSObject -Property @{
+        configs = New-Object PSObject -Property @{
+            dns = @{}
+        }
+    }
+} elseif (-not $sync.configs) {
+    $sync.configs = New-Object PSObject -Property @{
+        dns = @{}
+    }
+} elseif (-not $sync.configs.dns) {
+    $sync.configs.dns = @{}
+}
+
+$sync.configs.dns = '{
+    "Google": {
+      "Primary": "8.8.8.8",
+      "Secondary": "8.8.4.4"
+    },
+    "Cloudflare": {
+      "Primary": "1.1.1.1",
+      "Secondary": "1.0.0.1"
+    },
+    "Cloudflare_Malware": {
+      "Primary": "1.1.1.2",
+      "Secondary": "1.0.0.2"
+    },
+    "Cloudflare_Malware_Adult": {
+      "Primary": "1.1.1.3",
+      "Secondary": "1.0.0.3"
+    },
+    "Level3": {
+      "Primary": "4.2.2.2",
+      "Secondary": "4.2.2.1"
+    },
+    "Open_DNS": {
+      "Primary": "208.67.222.222",
+      "Secondary": "208.67.220.220"
+    },
+    "Quad9": {
+      "Primary": "9.9.9.9",
+      "Secondary": "149.112.112.112"
+    }
+}' | ConvertFrom-Json
+
 Add-Type -AssemblyName PresentationFramework
 Add-Type -AssemblyName System.Windows.Forms
 
@@ -25,8 +71,6 @@ $xaml = @"
         <TextBlock Grid.Row="1" Grid.Column="0" Margin="10">Select DNS Provider:</TextBlock>
         <ComboBox x:Name="DnsProviderComboBox" Grid.Row="1" Grid.Column="1" Margin="10" Width="200">
             <ComboBoxItem Content="DHCP"/>
-            <ComboBoxItem Content="Cloudflare"/>
-            <ComboBoxItem Content="Google"/>
             <ComboBoxItem Content="Custom"/>
         </ComboBox>
 
@@ -54,15 +98,20 @@ $customDns2TextBox = $window.FindName("CustomDns2TextBox")
 
 # Populate the network adapter combo box
 $networkAdapters = Get-NetAdapter | Where-Object { $_.Status -eq "Up" }
+$primaryAdapter = $null
 foreach ($adapter in $networkAdapters) {
     $null = $networkAdapterComboBox.Items.Add($adapter.Name)
+    if (-not $primaryAdapter -and $adapter.Status -eq "Up" -and $adapter.HardwareInterface -eq $true) {
+        $primaryAdapter = $adapter.Name
+    }
 }
 
-# Define some DNS server addresses
-$dnsServers = @{
-    DHCP       = @()
-    Cloudflare = @("1.1.1.1", "1.0.0.1")
-    Google     = @("8.8.8.8", "8.8.4.4")
+# Define the DNS server addresses from the JSON data
+$dnsServers = $sync.configs.dns
+
+# Populate the DNS provider combo box with the providers from the JSON data
+foreach ($provider in $dnsServers.PSObject.Properties.Name) {
+    $null = $dnsProviderComboBox.Items.Add($provider)
 }
 
 # Helper function to compare DNS addresses
@@ -101,10 +150,14 @@ $networkAdapterComboBox.add_SelectionChanged({
 
         if ($dnsServerAddresses.Count -eq 0) {
             $matchedProvider = "DHCP"
-        } elseif (Compare-DnsAddresses $dnsServerAddresses $dnsServers.Cloudflare) {
-            $matchedProvider = "Cloudflare"
-        } elseif (Compare-DnsAddresses $dnsServerAddresses $dnsServers.Google) {
-            $matchedProvider = "Google"
+        } else {
+            foreach ($provider in $dnsServers.PSObject.Properties.Name) {
+                $addresses = @($dnsServers.$provider.Primary, $dnsServers.$provider.Secondary)
+                if (Compare-DnsAddresses $dnsServerAddresses $addresses) {
+                    $matchedProvider = $provider
+                    break
+                }
+            }
         }
 
         if ($matchedProvider) {
@@ -125,6 +178,11 @@ $networkAdapterComboBox.add_SelectionChanged({
         }
     }
 })
+
+# Select the primary adapter if available and trigger the selection changed event
+if ($primaryAdapter) {
+    $networkAdapterComboBox.SelectedItem = $primaryAdapter
+}
 
 # Define the DNS provider selection changed event handler
 $dnsProviderComboBox.add_SelectionChanged({
@@ -175,8 +233,9 @@ $runButton.Add_Click({
                 $customDnsAddresses += $customDns2
             }
             Set-DnsClientServerAddress -InterfaceIndex $adapter.InterfaceIndex -ServerAddresses $customDnsAddresses
+            [System.Windows.MessageBox]::Show("Custom DNS servers set for $selectedAdapter")
         } else {
-            $dnsServerAddresses = $dnsServers[$selectedProvider]
+            $dnsServerAddresses = @($dnsServers.$selectedProvider.Primary, $dnsServers.$selectedProvider.Secondary)
             Set-DnsClientServerAddress -InterfaceIndex $adapter.InterfaceIndex -ServerAddresses $dnsServerAddresses
             [System.Windows.MessageBox]::Show("DNS servers set to $selectedProvider for $selectedAdapter")
         }
