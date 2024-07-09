@@ -3,6 +3,6 @@ uploading scripts i use to make them globally accessable and easily runnable usi
 
 Don't run them if you don't know what they do!!
 
-# <img src="https://christitus.com/images/logo-full.png" alt="LOGO" style="width: 5%;"/> Chris Titus Tech's Windows Utility
+# <img src="https://christitus.com/images/logo-full.png" alt="LOGO" style="width: 10%;"/> Chris Titus Tech's Windows Utility
 
 
