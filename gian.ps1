@@ -7,4 +7,6 @@ write-host @"
         \/         \/     \/       \/     \/    \/                      \/     \/     \/    
 "@
 
-"Gianni was here" | Out-File -FilePath "$env:USERPROFILE\Desktop\secret.txt"
+$desktopPath = [System.Environment]::GetFolderPath('Desktop')
+
+"Gianni was here" | Out-File -FilePath "$desktopPath\secret.txt"
