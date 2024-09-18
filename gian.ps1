@@ -10,4 +10,3 @@ write-host @"
 $desktopPath = [System.Environment]::GetFolderPath('Desktop')
 
 "Gianni was here" | Out-File -FilePath "$desktopPath\secret.txt"
-write-host "heya"
