@@ -1,0 +1,20 @@
+{
+  "WPFTweaks": [
+    "WPFTweaksHiber",
+    "WPFTweaksEndTaskOnTaskbar",
+    "WPFTweaksHome",
+    "WPFTweaksTele",
+    "WPFTweaksIPv46",
+    "WPFTweaksAH",
+    "WPFTweaksLoc",
+    "WPFTweaksWifi",
+    "WPFTweaksDVR",
+    "WPFTweaksPowershell7Tele",
+    "WPFTweaksServices",
+    "WPFTweaksConsumerFeatures",
+    "WPFTweaksStorage"
+  ],
+  "WPFFeature": [],
+  "Install": [],
+  "WPFInstall": []
+}
